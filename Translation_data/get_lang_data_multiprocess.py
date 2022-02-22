@@ -14,8 +14,9 @@ import os
 
 
 class myXmlHandler(XmlHandler):
-    def __init__(self, strict=False, normalize_form=None):       
-       
+    def __init__(self, csv_path, strict=False, normalize_form=None):       
+        
+        self.csv_path = csv_path
         self.records = []
         self._record = None
         self._field = None
@@ -28,7 +29,7 @@ class myXmlHandler(XmlHandler):
     def process_record(self, record):
         # Check if record has 041h field, i.e. "translated from"
         if record['041']:
-            print("Processing records")
+            
             if record['041'].get_subfields('h'):
                 # Object MMSID
                 mmsid = record["001"].data
@@ -56,20 +57,32 @@ class myXmlHandler(XmlHandler):
 
                 # Write to csv. Had some trouble getting sqlite to work with multiprocessing.
                 #df.to_sql('translation_data',self.con, if_exists='append', index=False)
-                df.to_csv('langs2.csv', mode='a', header=not os.path.exists('langs2.csv'), index=False)
+                df.to_csv(csv_path, mode='a', header=False, index=False)
 
 
 
 if __name__ == "__main__":
     # Returns list of Nationalbibliography from folder path    
     tasks = glob.glob("/home/larsm/basex/nasjonalbiblio/shards3/*")
+    # Set path to destination csv
+    csv_path = "lang4.csv"
+    
+    # Initialize csv with headers
+    cols = ['lang', 'org_lang', 'org_title', 'org_mmsid']
+    df = pd.DataFrame(columns = cols)
+    df.to_csv(csv_path)
+    
+    # Set start time
+    start_time = time.time()
+    
     num_workers = mp.cpu_count() 
     pool = mp.Pool(num_workers)
-    xh = myXmlHandler()
+    xh = myXmlHandler(csv_path)
     for task in tasks: 
-        pool.apply_async(parse_xml, args=(task, xh))
-        print(f"Finishing {task}")
-    
+        print(f"{task} started")
+        pool.apply_async(parse_xml, args=(task, xh))   
+
     pool.close()
     pool.join()
     print(f"Finishing all")
+    print("--- %s seconds ---" % (time.time() - start_time))
