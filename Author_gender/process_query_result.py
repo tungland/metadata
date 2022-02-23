@@ -4,7 +4,7 @@ import gender_guesser.detector as gender
 
 """
 add_gender.py collected authors gender from NB's authority register. But some entries got duplicated.
-Otherwise it appears to be identical. This script removes the duplicates.
+Otherwise it appears to be identical. This script removes the duplicates. Some entries are duplicated in the original data. 
 """
 def convert(gen):
     male = ['male', 'mostly_male']
